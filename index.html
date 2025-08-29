@@ -1,0 +1,3471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Inventory Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define CSS Variables for Theming */
+        :root {
+            --primary: #2563eb;    /* Blue-600 */
+            --secondary: #f3f4f6;  /* Gray-100 */
+            --dark: #1f2937;       /* Gray-900 */
+            --light: #ffffff;      /* White */
+            --danger: #ef4444;     /* Red-500 */
+            --success: #10b981;    /* Green-500 */
+            --info: #60a5fa;       /* Blue-400 */
+            --border: #e5e7eb;     /* Gray-200 */
+            --text-gray: #6b7280;  /* Gray-500 */
+            --sidebar-width: 220px;
+            --header-height: 70px;
+        }
+
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Essential for sticky elements to work correctly across full viewport height */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Hide main scrollbar, enable custom scrollbars */
+        }
+
+        body {
+            background-color: #f0f4f8; /* Light blue-gray background */
+            line-height: 1.6;
+            color: var(--dark);
+        }
+
+        /* Login Page Styling */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+
+        .login-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--dark);
+        }
+
+
+        /* Main App Container */
+        .container {
+            display: flex;
+            height: 100%; /* Make container fill body height */
+            background-color: var(--light);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            overflow: hidden; /* Keep container content within its bounds */
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark);
+            color: white;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky; /* Keep sidebar fixed on scroll */
+            top: 0;
+            height: 100%; /* Fill container height */
+            overflow-y: auto; /* Allow scrolling for many menu items */
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            margin-left: 0.75rem;
+        }
+        .sidebar-header i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .menu-item {
+            padding: 0.8rem 1rem;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(3px);
+        }
+
+        .menu-item.active {
+            background-color: var(--primary);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-item i {
+            margin-right: 0.8rem;
+            font-size: 1rem;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            height: 100%; /* Fill remaining height of container */
+            overflow-y: auto; /* Allow scrolling ONLY for this main content area */
+        }
+
+        /* Header Styling */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background-color: var(--light);
+            border-radius: 0.75rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            height: var(--header-height);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-gray);
+            font-weight: 600;
+        }
+
+        .auto-save-status {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+        }
+
+        /* Page Content Containers */
+        .page-content {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            gap: 1.5rem;
+            flex-grow: 1; /* Allow content to grow */
+        }
+
+        .page-content.active {
+            display: flex; /* Show active page */
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--light);
+            border-radius: 0.75rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Button Styling */
+        .btn {
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .btn-secondary {
+            background-color: var(--border);
+            color: var(--dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        .btn-info {
+            background-color: var(--info);
+            color: white;
+        }
+        .btn-info:hover {
+            background-color: #3b82f6;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.85rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--dark);
+            background-color: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 0.6rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Ensure table is not too narrow */
+            background-color: white;
+        }
+
+        .table th, .table td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+
+        .table th {
+            background-color: var(--secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
+            color: var(--text-gray);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Badge Styling */
+        .badge {
+            display: inline-block;
+            padding: 0.2em 0.5em;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: var(--success);
+        }
+        .badge-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+        }
+        .badge-info {
+            background-color: #dbeafe;
+            color: var(--info);
+        }
+        .badge-primary {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+        .badge-secondary {
+            background-color: var(--border);
+            color: var(--text-gray);
+        }
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #d97706; /* Amber-700 */
+        }
+
+
+        /* Chart Specific Styles (Dashboard) */
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 180px;
+            background-color: var(--light);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-bar {
+            width: 60px;
+            background: linear-gradient(to top, var(--primary), #60a5fa);
+            border-radius: 6px 6px 0 0;
+            transition: height 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            position: relative;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -20px;
+            color: var(--dark);
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* Order Item Rows in Order Modal */
+        .order-item-row {
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: var(--secondary);
+            position: relative;
+        }
+        .order-item-row .form-label {
+            margin-bottom: 0.2rem;
+            font-size: 0.8rem;
+            color: var(--text-gray);
+        }
+        .order-item-row .form-control {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        .order-item-row .btn-danger.btn-sm {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.3rem 0.6rem;
+        }
+        .order-item-row .product-info {
+            font-size: 0.85rem;
+            color: var(--dark);
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        .order-item-row .product-not-found {
+            color: var(--danger);
+        }
+        
+        /* Utility Classes */
+        .d-none { display: none !important; }
+        .w-100 { width: 100%; }
+        .text-center { text-align: center; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .ml-2 { margin-left: 0.5rem; }
+        .mr-2 { margin-right: 0.5rem; }
+        .float-right { float: right; }
+
+        /* Modal Styling */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--light);
+            border-radius: 0.8rem;
+            width: 90%;
+            max-width: 600px; /* Slightly larger modal for more fields */
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            gap: 0.6rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-gray);
+            transition: color 0.2s;
+        }
+        .close-btn:hover {
+            color: var(--dark);
+        }
+
+        /* Dropdown for Order Status (Custom) */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 10;
+            display: none;
+            float: left;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            margin: 0.125rem 0 0;
+            font-size: 0.9rem;
+            color: var(--dark);
+            text-align: left;
+            list-style: none;
+            background-color: white;
+            background-clip: padding-box;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            clear: both;
+            font-weight: 400;
+            color: var(--dark);
+            text-align: inherit;
+            white-space: nowrap;
+            background-color: transparent;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover:not(:disabled) {
+            color: var(--primary);
+            background-color: var(--secondary);
+        }
+        .dropdown-item:disabled {
+            color: var(--text-gray);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Order Print Preview */
+        .print-preview {
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .print-preview h2, .print-preview h3 {
+            text-align: center;
+            color: #000;
+            margin-bottom: 10px;
+        }
+        .print-preview .header-info, .print-preview .footer-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .print-preview .details-section {
+            margin-bottom: 15px;
+        }
+        .print-preview .details-section p {
+            margin: 3px 0;
+        }
+        .print-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        .print-preview table th, .print-preview table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .print-preview table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .print-preview .total-line {
+            text-align: right;
+            font-weight: bold;
+        }
+        .print-preview .notes {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            font-size: 12px;
+            color: #555;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .modal, .modal.active, .modal-content, .print-preview {
+                visibility: visible;
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                height: auto;
+                max-height: none;
+                overflow: visible;
+                transform: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+            }
+            .modal-header, .modal-footer {
+                display: none; /* Hide modal controls for print */
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            html, body {
+                overflow: auto; /* Re-enable global scroll for smaller screens */
+            }
+            .container {
+                flex-direction: column;
+                margin: 10px;
+                height: auto; /* Allow container to grow with content */
+            }
+            .sidebar {
+                position: relative; /* Not sticky on mobile */
+                width: 100%;
+                height: auto;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .sidebar-header {
+                justify-content: center;
+                border-bottom: none;
+                padding-bottom: 0.5rem;
+            }
+            .sidebar-menu {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+                padding-top: 0.5rem;
+            }
+            .menu-item {
+                flex-basis: calc(50% - 0.5rem); /* Two items per row */
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.6rem 0.5rem;
+            }
+            .menu-item i {
+                margin-right: 0.5rem;
+            }
+            .main-content {
+                padding: 1rem;
+                height: auto; /* Allow content to grow on mobile */
+                overflow-y: visible; /* Content can push parent on mobile */
+            }
+            .header {
+                position: relative; /* Not sticky on mobile */
+                flex-direction: column;
+                align-items: flex-start;
+                height: auto;
+                padding: 0.8rem 1rem;
+            }
+            .page-title {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 0.5rem;
+                font-size: 1.3rem;
+            }
+            .user-info {
+                width: 100%;
+                justify-content: center;
+                font-size: 0.85rem;
+            }
+            .chart-bar {
+                width: 45px;
+            }
+            .btn {
+                width: 100%;
+                font-size: 0.8rem;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .card-header .btn {
+                margin-top: 0.75rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .menu-item {
+                flex-basis: 100%; /* One item per row */
+            }
+            .table th, .table td {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-card">
+            <h1 class="login-title">Inventory System Login</h1>
+            <div class="form-group">
+                <label class="form-label" for="login-username">Username</label>
+                <input type="text" id="login-username" class="form-control" placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="login-password">Password</label>
+                <input type="password" id="login-password" class="form-control" placeholder="Enter your password">
+            </div>
+            <button id="login-btn" class="btn btn-primary w-100">Login</button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="container d-none">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-box"></i>
+                <h2>Vera</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-page="clients">
+                    <i class="fas fa-users"></i>
+                    <span>Clients</span>
+                </li>
+                <li class="menu-item" data-page="locations">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Locations</span>
+                </li>
+                <li class="menu-item" data-page="products">
+                    <i class="fas fa-boxes"></i>
+                    <span>Products</span>
+                </li>
+                <li class="menu-item" data-page="inventory">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Inventory</span>
+                </li>
+                <li class="menu-item" data-page="inbound">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Inbound</span>
+                </li>
+                <li class="menu-item" data-page="outbound">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Outbound</span>
+                </li>
+                <li class="menu-item" data-page="orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Orders</span>
+                </li>
+                <li class="menu-item" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="page-title" id="page-title">Dashboard</div>
+                <div class="user-info">
+                    <span>Welcome > M.Ibrahim </span>
+                    <span class="auto-save-status">Auto-Save: <span id="last-save-time">Enabled</span></span>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Inventory Summary</div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-bar" id="total-products-bar" style="height: 0;">
+                            <span class="chart-bar-value">0</span>
+                            <span class="chart-bar-label">Products</span>
+                        </div>
+                        <div class="chart-bar" id="total-inventory-bar" style="height: 0;">
+                            <span class="chart-bar-value">0</span>
+                            <span class="chart-bar-label">Total Stock</span>
+                        </div>
+                        <div class="chart-bar" id="low-stock-bar" style="height: 0; background: linear-gradient(to top, var(--danger), #ef4444);">
+                            <span class="chart-bar-value">0</span>
+                            <span class="chart-bar-label">Low Stock</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Recent Activity</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Client</th>
+                                    <th>Location</th>
+                                    <th>Product SKU</th>
+                                    <th>Quantity</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-activity-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Page -->
+            <div id="clients-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Clients</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openClientModal()"><i class="fas fa-user-plus"></i> Add Client</button>
+                            <input type="file" id="import-clients-file" accept=".csv" class="d-none" onchange="importCSV('clients')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-clients-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('clients')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="client-search" class="form-control" placeholder="Search clients by ID or name..." oninput="renderClientsTable()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Client ID</th>
+                                    <th>Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Locations Page -->
+            <div id="locations-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Locations</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openLocationModal()"><i class="fas fa-plus"></i> Add Location</button>
+                            <input type="file" id="import-locations-file" accept=".csv" class="d-none" onchange="importCSV('locations')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-locations-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('locations')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="location-search" class="form-control" placeholder="Search locations by code or description..." oninput="renderLocationsTable()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Location Code</th>
+                                    <th>Description</th>
+                                    <th>Capacity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="locations-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Page -->
+            <div id="products-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Products</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> Add Product</button>
+                            <input type="file" id="import-products-file" accept=".csv" class="d-none" onchange="importCSV('products')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-products-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('products')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="product-client-filter">Filter by Client</label>
+                        <select id="product-client-filter" class="form-control mb-3" onchange="renderProductsTable()">
+                            <option value="all">All Clients</option>
+                            <!-- Clients will be populated by JavaScript -->
+                        </select>
+                        <input type="text" id="product-search" class="form-control" placeholder="Search products by SKU or name..." oninput="renderProductsTable()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Price</th>
+                                    <th>Client</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Page -->
+            <div id="inventory-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Current Inventory</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="inventory-client-filter">Filter by Client</label>
+                        <select id="inventory-client-filter" class="form-control mb-3" onchange="renderInventoryTable()">
+                            <option value="all">All Clients</option>
+                            <!-- Clients will be populated by JavaScript -->
+                        </select>
+                        <label class="form-label" for="inventory-location-filter">Filter by Location</label>
+                        <select id="inventory-location-filter" class="form-control mb-3" onchange="renderInventoryTable()">
+                            <option value="all">All Locations</option>
+                            <!-- Locations will be populated by JavaScript -->
+                        </select>
+                        <input type="text" id="inventory-search" class="form-control" placeholder="Search inventory by SKU or product name..." oninput="renderInventoryTable()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Client</th>
+                                    <th>Location</th>
+                                    <th>Total Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inbound Page -->
+            <div id="inbound-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Receive Stock (Inbound)</div>
+                        <div>
+                            <input type="file" id="import-inbound-file" accept=".csv" class="d-none" onchange="importCSV('inbound')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-inbound-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('inbound')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label" for="inbound-client-id">Client</label>
+                            <select id="inbound-client-id" class="form-control" required onchange="populateInboundProductOptions()">
+                                <option value="">Select Client</option>
+                                <!-- Clients populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inbound-location-id">Location</label>
+                            <select id="inbound-location-id" class="form-control" required>
+                                <option value="">Select Location</option>
+                                <!-- Locations populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inbound-sku">Product SKU</label>
+                            <input type="text" id="inbound-sku" class="form-control" placeholder="Enter Product SKU" oninput="populateProductName('inbound-sku', 'inbound-product-name', document.getElementById('inbound-client-id').value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inbound-product-name">Product Name</label>
+                            <input type="text" id="inbound-product-name" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inbound-qty">Quantity</label>
+                            <input type="number" id="inbound-qty" class="form-control" min="1" value="1">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="receiveStock()">Receive Stock</button>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <div class="card-title">Recent Inbound Records</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Location</th>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inbound-records-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outbound Page -->
+            <div id="outbound-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Dispatch Stock (Outbound)</div>
+                        <div>
+                            <input type="file" id="import-outbound-file" accept=".csv" class="d-none" onchange="importCSV('outbound')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-outbound-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('outbound')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-client-id">Client</label>
+                            <select id="outbound-client-id" class="form-control" required onchange="populateOutboundProductOptions()">
+                                <option value="">Select Client</option>
+                                <!-- Clients populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-location-id">Location</label>
+                            <select id="outbound-location-id" class="form-control" required>
+                                <option value="">Select Location</option>
+                                <!-- Locations populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-sku">Product SKU</label>
+                            <input type="text" id="outbound-sku" class="form-control" placeholder="Enter Product SKU" oninput="populateProductName('outbound-sku', 'outbound-product-name', document.getElementById('outbound-client-id').value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-product-name">Product Name</label>
+                            <input type="text" id="outbound-product-name" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-qty">Quantity</label>
+                            <input type="number" id="outbound-qty" class="form-control" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="outbound-reason">Reason</label>
+                            <input type="text" id="outbound-reason" class="form-control" placeholder="e.g., Sale, Damage, Return">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="dispatchStock()">Dispatch Stock</button>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <div class="card-title">Recent Outbound Records</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Location</th>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Qty</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outbound-records-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Page -->
+            <div id="orders-page" class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Orders</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openOrderModal()"><i class="fas fa-cart-plus"></i> New Order</button>
+                            <input type="file" id="import-orders-file" accept=".csv" class="d-none" onchange="importCSV('orders')">
+                            <button class="btn btn-success ml-2" onclick="document.getElementById('import-orders-file').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                            <button class="btn btn-info ml-2" onclick="exportCSV('orders')"><i class="fas fa-file-export"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="order-client-filter">Filter by Client</label>
+                        <select id="order-client-filter" class="form-control mb-3" onchange="renderOrdersTable()">
+                            <option value="all">All Clients</option>
+                            <!-- Clients will be populated by JavaScript -->
+                        </select>
+                        <input type="text" id="order-search" class="form-control" placeholder="Search orders by ID or client name..." oninput="renderOrdersTable()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Client</th>
+                                    <th>Date</th>
+                                    <th>Total Items</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table">
+                                <!-- Filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Client Modal -->
+    <div id="client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="client-modal-title">Add New Client</h2>
+                <button class="close-btn" onclick="closeModal('client-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="client-form">
+                    <div class="form-group">
+                        <label class="form-label" for="client-id">Client ID</label>
+                        <input type="text" id="client-id" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="client-name">Client Name</label>
+                        <input type="text" id="client-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="client-contact">Contact Person</label>
+                        <input type="text" id="client-contact" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="client-email">Email</label>
+                        <input type="email" id="client-email" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('client-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="location-modal-title">Add New Location</h2>
+                <button class="close-btn" onclick="closeModal('location-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="location-form">
+                    <div class="form-group">
+                        <label class="form-label" for="location-id">Location Code</label>
+                        <input type="text" id="location-id" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="location-description">Description</label>
+                        <textarea id="location-description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="location-capacity">Capacity (units)</label>
+                        <input type="number" id="location-capacity" class="form-control" min="0" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('location-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveLocation()">Save Location</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="product-modal-title">Add New Product</h2>
+                <button class="close-btn" onclick="closeModal('product-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <div class="form-group">
+                        <label class="form-label" for="product-client-id">Client</label>
+                        <select id="product-client-id" class="form-control" required>
+                            <option value="">Select Client</option>
+                            <!-- Clients will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="product-sku">SKU</label>
+                        <input type="text" id="product-sku" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="product-name">Product Name</label>
+                        <input type="text" id="product-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="product-description">Description (Optional)</label>
+                        <textarea id="product-description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="product-price">Price (AED)</label>
+                        <input type="number" id="product-price" class="form-control" step="0.01" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="order-modal-title">Create New Order</h2>
+                <button class="close-btn" onclick="closeModal('order-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="order-form">
+                    <div class="form-group">
+                        <label class="form-label" for="order-client-id">Client</label>
+                        <select id="order-client-id" class="form-control" required onchange="populateOrderProductOptions()">
+                            <option value="">Select Client</option>
+                            <!-- Clients populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="order-date">Order Date</label>
+                        <input type="date" id="order-date" class="form-control" required>
+                    </div>
+                    <hr class="my-3 border-bottom">
+                    <h4 class="card-title mb-3">Order Items</h4>
+                    <div id="order-items-container">
+                        <!-- Order items will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm mt-3" onclick="addOrderItem()"><i class="fas fa-plus-circle"></i> Add Item</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('order-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveOrder()">Create Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order View/Print Modal -->
+    <div id="order-view-print-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="order-view-print-modal-title">Order Details</h2>
+                <button class="close-btn" onclick="closeModal('order-view-print-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="order-print-content" class="print-preview">
+                    <!-- Order details for viewing and printing -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('order-view-print-modal')">Close</button>
+                <button class="btn btn-primary" onclick="printOrder()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="confirmation-modal-title">Confirm Action</h2>
+                <button class="close-btn" onclick="closeModal('confirmation-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-modal-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirmation-modal')">Cancel</button>
+                <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="message-modal-title">Notification</h2>
+                <button class="close-btn" onclick="closeModal('message-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="message-modal-text"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('message-modal')">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // --- Global Data Structures (Sample Data) ---
+        let clients = JSON.parse(localStorage.getItem('ims_clients')) || [
+            { id: 'C001', name: 'Tech Solutions Inc.', contactPerson: 'Alice Wonderland', email: 'alice@tech.com' },
+            { id: 'C002', name: 'Global Goods Ltd.', contactPerson: 'Bob Builder', email: 'bob@global.com' },
+        ];
+
+        let locations = JSON.parse(localStorage.getItem('ims_locations')) || [
+            { id: 'L-A1', description: 'Warehouse Aisle 1, Shelf 1', capacity: 100 },
+            { id: 'L-B2', description: 'Warehouse Aisle 2, Bin 2', capacity: 200 },
+        ];
+
+        let products = JSON.parse(localStorage.getItem('ims_products')) || [
+            { id: 'P1', clientId: 'C001', sku: 'LAPTOP001', name: 'Gaming Laptop', description: 'High-performance gaming laptop', price: 1200.00 },
+            { id: 'P2', clientId: 'C001', sku: 'MOUSE001', name: 'Wireless Mouse', description: 'Ergonomic wireless mouse', price: 25.50 },
+            { id: 'P3', clientId: 'C002', sku: 'KEYBOARD001', name: 'Mechanical Keyboard', description: 'RGB mechanical keyboard', price: 75.00 },
+            { id: 'P4', clientId: 'C002', sku: 'MONITOR001', name: '4K Monitor', description: '27-inch 4K UHD monitor', price: 350.00 },
+        ];
+
+        // Inventory now tracks by productId, clientId, and locationId
+        let inventory = JSON.parse(localStorage.getItem('ims_inventory')) || [
+            { id: 'INV1', productId: 'P1', clientId: 'C001', locationId: 'L-A1', availableQty: 10, reservedQty: 0, damageQty: 0 },
+            { id: 'INV2', productId: 'P2', clientId: 'C001', locationId: 'L-A1', availableQty: 20, reservedQty: 0, damageQty: 0 },
+            { id: 'INV3', productId: 'P3', clientId: 'C002', locationId: 'L-B2', availableQty: 15, reservedQty: 0, damageQty: 0 },
+            { id: 'INV4', productId: 'P4', clientId: 'C002', locationId: 'L-B2', availableQty: 5, reservedQty: 0, damageQty: 0 },
+        ];
+
+        let inboundRecords = JSON.parse(localStorage.getItem('ims_inbound_records')) || [
+            { id: 'INB001', date: '2025-07-20', clientId: 'C001', locationId: 'L-A1', productId: 'P1', qty: 10 },
+            { id: 'INB002', date: '2025-07-21', clientId: 'C001', locationId: 'L-A1', productId: 'P2', qty: 25 },
+        ];
+
+        let outboundRecords = JSON.parse(localStorage.getItem('ims_outbound_records')) || [
+            { id: 'OUT001', date: '2025-07-22', clientId: 'C001', locationId: 'L-A1', productId: 'P1', qty: 2, reason: 'Customer Sale' },
+            { id: 'OUT002', date: '2025-07-23', clientId: 'C002', locationId: 'L-B2', productId: 'P3', qty: 5, reason: 'Internal Use' },
+        ];
+
+        let orders = JSON.parse(localStorage.getItem('ims_orders')) || [
+            {
+                id: 'ORD001', clientId: 'C001', orderDate: '2025-08-20', status: 'created',
+                items: [
+                    { productId: 'P1', qty: 1, locationId: 'L-A1' },
+                    { productId: 'P2', qty: 5, locationId: 'L-A1' }
+                ]
+            },
+            {
+                id: 'ORD002', clientId: 'C002', orderDate: '2025-08-21', status: 'picked',
+                items: [
+                    { productId: 'P3', qty: 2, locationId: 'L-B2' }
+                ]
+            },
+        ];
+
+        // --- Utility Functions ---
+
+        /**
+         * Generates a unique ID with a given prefix.
+         * @param {string} prefix - The prefix for the ID (e.g., 'P' for Product).
+         * @returns {string} A unique ID string.
+         */
+        function generateId(prefix) {
+            return prefix + Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        /**
+         * Saves all application data to localStorage.
+         */
+        function saveData() {
+            localStorage.setItem('ims_clients', JSON.stringify(clients));
+            localStorage.setItem('ims_locations', JSON.stringify(locations));
+            localStorage.setItem('ims_products', JSON.stringify(products));
+            localStorage.setItem('ims_inventory', JSON.stringify(inventory));
+            localStorage.setItem('ims_inbound_records', JSON.stringify(inboundRecords));
+            localStorage.setItem('ims_outbound_records', JSON.stringify(outboundRecords));
+            localStorage.setItem('ims_orders', JSON.stringify(orders));
+            document.getElementById('last-save-time').textContent = 'Saved ' + new Date().toLocaleTimeString();
+        }
+
+        /**
+         * Retrieves a product by its SKU and optionally by ClientId.
+         * @param {string} sku - The SKU of the product.
+         * @param {string} [clientId] - Optional client ID to filter by.
+         * @returns {object|undefined} The product object if found, otherwise undefined.
+         */
+        function getProductBySku(sku, clientId = null) {
+            let foundProduct = products.find(p => p.sku.toUpperCase() === sku.toUpperCase());
+            if (foundProduct && clientId && foundProduct.clientId !== clientId) {
+                return undefined; // Product found but not for the specified client
+            }
+            return foundProduct;
+        }
+
+        /**
+         * Retrieves a product by its ID.
+         * @param {string} id - The ID of the product.
+         * @returns {object|undefined} The product object if found, otherwise undefined.
+         */
+        function getProductById(id) {
+            return products.find(p => p.id === id);
+        }
+
+        /**
+         * Retrieves a client by its ID.
+         * @param {string} id - The ID of the client.
+         * @returns {object|undefined} The client object if found, otherwise undefined.
+         */
+        function getClientById(id) {
+            return clients.find(c => c.id === id);
+        }
+
+        /**
+         * Retrieves a location by its ID.
+         * @param {string} id - The ID of the location.
+         * @returns {object|undefined} The location object if found, otherwise undefined.
+         */
+        function getLocationById(id) {
+            return locations.find(l => l.id === id);
+        }
+
+        /**
+         * Retrieves an inventory item based on productId, clientId, and locationId.
+         * @param {string} productId
+         * @param {string} clientId
+         * @param {string} locationId
+         * @returns {object|undefined} The inventory item or undefined.
+         */
+        function getInventoryItem(productId, clientId, locationId) {
+            return inventory.find(item =>
+                item.productId === productId &&
+                item.clientId === clientId &&
+                item.locationId === locationId
+            );
+        }
+
+        /**
+         * Formats a date object or string into 'YYYY-MM-DD' format.
+         * @param {Date|string} date - The date to format.
+         * @returns {string} The formatted date string.
+         */
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            return [year, month, day].join('-');
+        }
+
+        /**
+         * Populates the product name input field based on the SKU.
+         * @param {string} skuInputId - The ID of the SKU input element.
+         * @param {string} nameInputId - The ID of the product name input element.
+         * @param {string} [clientId] - Optional client ID to filter products.
+         */
+        function populateProductName(skuInputId, nameInputId, clientId = null) {
+            const sku = document.getElementById(skuInputId).value;
+            const productNameInput = document.getElementById(nameInputId);
+            const product = getProductBySku(sku, clientId);
+            if (productNameInput) {
+                productNameInput.value = product ? product.name : 'Product Not Found';
+                productNameInput.style.color = product ? 'var(--dark)' : 'var(--danger)';
+            }
+        }
+
+        /**
+         * Updates the content of the print preview modal with order details.
+         * @param {string} orderId - The ID of the order to display.
+         */
+        function updateOrderPrintContent(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            const printContent = document.getElementById('order-print-content');
+
+            if (!order || !printContent) return;
+
+            const client = getClientById(order.clientId);
+            const clientName = client ? client.name : 'N/A';
+            const contactPerson = client ? client.contactPerson : 'N/A';
+            const clientEmail = client ? client.email : 'N/A';
+
+            let itemsHtml = order.items.map(item => {
+                const product = getProductById(item.productId);
+                const location = getLocationById(item.locationId);
+                const itemName = product ? product.name : 'Unknown Product';
+                const itemSku = product ? product.sku : 'N/A';
+                const itemLocation = location ? location.id : 'N/A';
+                const itemPrice = product ? product.price : 0;
+                const itemTotal = item.qty * itemPrice;
+                return `
+                    <tr>
+                        <td>${itemSku}</td>
+                        <td>${itemName}</td>
+                        <td>${itemLocation}</td>
+                        <td>${item.qty}</td>
+                        <td>${itemPrice.toFixed(2)} AED</td>
+                        <td>${itemTotal.toFixed(2)} AED</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalAmount = order.items.reduce((sum, item) => {
+                const product = getProductById(item.productId);
+                return sum + (item.qty * (product ? product.price : 0));
+            }, 0);
+
+            printContent.innerHTML = `
+                <h2>ORDER #${order.id}</h2>
+                <div class="header-info">
+                    <div>
+                        <strong>Date:</strong> ${order.orderDate}<br>
+                        <strong>Status:</strong> ${getOrderStatusDisplayText(order.status)}
+                    </div>
+                    <div>
+                        <strong>Client:</strong> ${clientName}<br>
+                        <strong>Contact:</strong> ${contactPerson}<br>
+                        <strong>Email:</strong> ${clientEmail}
+                    </div>
+                </div>
+                <div class="details-section">
+                    <h3>Items Ordered</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Product Name</th>
+                                <th>Location</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="total-line">Grand Total:</td>
+                                <td>${totalAmount.toFixed(2)} AED</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="notes">
+                    <p>Thank you for your business!</p>
+                    <p>Generated by Advanced Inventory Management System.</p>
+                </div>
+            `;
+        }
+
+
+        // --- Core Application Logic ---
+        let currentPage = 'dashboard';
+        let currentEditingClientId = null;
+        let currentEditingLocationId = null;
+        let currentEditingProductId = null;
+        let currentOrderFilterClientId = 'all'; // For filtering orders
+        let currentOrderModalItems = []; // For dynamic order item rows
+        let orderItemCounter = 0; // To give unique IDs to order item rows
+
+        // Initialize the app on page load
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        /**
+         * Initializes the application, sets up event listeners, and starts auto-save.
+         */
+        function initApp() {
+            // Set auto-save indicator initially
+            document.getElementById('last-save-time').textContent = 'Enabled';
+
+            // Attach event listeners for navigation
+            document.querySelectorAll('.sidebar-menu .menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    if (page === 'logout') {
+                        logout();
+                    } else {
+                        switchPage(page);
+                    }
+                });
+            });
+
+            // Attach login button event
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', login);
+            }
+
+            // Set up auto-save
+            setInterval(saveData, 10000); // Auto-save every 10 seconds
+
+            // Check login status
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('login-page').classList.add('d-none');
+                document.getElementById('app').classList.remove('d-none');
+                switchPage('dashboard');
+            } else {
+                document.getElementById('login-page').classList.remove('d-none');
+                document.getElementById('app').classList.add('d-none');
+            }
+        }
+
+        // --- Login / Logout ---
+        /**
+         * Handles user login with hardcoded credentials for demonstration.
+         */
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            // Simple hardcoded login for demonstration
+            if (username === 'admin' && password === 'admin123') {
+                localStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('login-page').classList.add('d-none');
+                document.getElementById('app').classList.remove('d-none');
+                switchPage('dashboard');
+                showMessage('Success', 'Logged in successfully!');
+            } else {
+                showMessage('Error', 'Invalid username or password. Please try again.');
+            }
+        }
+
+        /**
+         * Logs out the current user and redirects to the login page.
+         */
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            document.getElementById('app').classList.add('d-none');
+            document.getElementById('login-page').classList.remove('d-none');
+            // Clear input fields
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showMessage('Info', 'You have been logged out.');
+        }
+
+
+        /**
+         * Switches the active page content and updates the sidebar menu.
+         * @param {string} pageName - The name of the page to switch to (e.g., 'dashboard', 'products').
+         */
+        function switchPage(pageName) {
+            currentPage = pageName;
+
+            // Update active menu item
+            document.querySelectorAll('.sidebar-menu .menu-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageName) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update page title
+            const pageTitleEl = document.getElementById('page-title');
+            const pageTitles = {
+                dashboard: 'Dashboard',
+                clients: 'Clients',
+                locations: 'Locations',
+                products: 'Products',
+                inventory: 'Inventory',
+                inbound: 'Inbound Operations',
+                outbound: 'Outbound Operations',
+                orders: 'Order Management',
+            };
+            pageTitleEl.textContent = pageTitles[pageName] || pageName.charAt(0).toUpperCase() + pageName.slice(1);
+
+            // Hide all page content and show the active one
+            document.querySelectorAll('.page-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const activePageContent = document.getElementById(`${pageName}-page`);
+            if (activePageContent) {
+                activePageContent.classList.add('active');
+            }
+
+            // Render content for the new page
+            renderApp();
+        }
+
+        /**
+         * Main render function, called after any data change or page switch.
+         * It orchestrates rendering of content for the current page.
+         */
+        function renderApp() {
+            saveData(); // Always save data before re-rendering
+            // Populate all client/location dropdowns every time, as data might change
+            populateClientDropdowns();
+            populateLocationDropdowns();
+
+            switch (currentPage) {
+                case 'dashboard':
+                    renderDashboardSummary();
+                    renderRecentActivity();
+                    break;
+                case 'clients':
+                    renderClientsTable();
+                    break;
+                case 'locations':
+                    renderLocationsTable();
+                    break;
+                case 'products':
+                    renderProductsTable();
+                    break;
+                case 'inventory':
+                    renderInventoryTable();
+                    break;
+                case 'inbound':
+                    renderInboundRecords();
+                    document.getElementById('inbound-sku').value = '';
+                    document.getElementById('inbound-qty').value = '1';
+                    document.getElementById('inbound-product-name').value = '';
+                    document.getElementById('inbound-product-name').style.color = 'var(--dark)';
+                    break;
+                case 'outbound':
+                    renderOutboundRecords();
+                    document.getElementById('outbound-sku').value = '';
+                    document.getElementById('outbound-qty').value = '1';
+                    document.getElementById('outbound-reason').value = '';
+                    document.getElementById('outbound-product-name').value = '';
+                    document.getElementById('outbound-product-name').style.color = 'var(--dark)';
+                    break;
+                case 'orders':
+                    renderOrdersTable();
+                    break;
+            }
+        }
+
+        // --- Modals ---
+
+        /**
+         * Opens a specified modal.
+         * @param {string} modalId - The ID of the modal to open.
+         */
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        /**
+         * Closes a specified modal.
+         * @param {string} modalId - The ID of the modal to close.
+         */
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        /**
+         * Displays a custom message box with a title and message.
+         * @param {'Success'|'Error'|'Warning'|'Info'} type - The type of message.
+         * @param {string} message - The message content.
+         */
+        function showMessage(type, message) {
+            const titleMap = {
+                'Success': 'Success',
+                'Error': 'Error',
+                'Warning': 'Warning',
+                'Info': 'Information'
+            };
+            const titleElement = document.getElementById('message-modal-title');
+            const textElement = document.getElementById('message-modal-text');
+
+            if (titleElement) titleElement.textContent = titleMap[type];
+            if (textElement) textElement.textContent = message;
+
+            if (titleElement) {
+                titleElement.style.color = {
+                    'Success': 'var(--success)',
+                    'Error': 'var(--danger)',
+                    'Warning': 'var(--info)',
+                    'Info': 'var(--primary)'
+                }[type] || 'var(--dark)';
+            }
+            openModal('message-modal');
+        }
+
+        // --- Global Dropdown Population ---
+        /**
+         * Populates all client select dropdowns across the application.
+         */
+        function populateClientDropdowns() {
+            const clientSelects = document.querySelectorAll('select[id$="-client-id"], select[id$="-client-filter"]');
+            clientSelects.forEach(select => {
+                const currentValue = select.value; // Store current value to re-select
+                select.innerHTML = '<option value="">Select Client</option>';
+                if (select.id.includes('filter')) {
+                    select.innerHTML = '<option value="all">All Clients</option>';
+                }
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = `${client.id} - ${client.name}`;
+                    select.appendChild(option);
+                });
+                if (currentValue) { // Restore previous selection if it still exists
+                    select.value = currentValue;
+                }
+            });
+        }
+
+        /**
+         * Populates all location select dropdowns across the application.
+         */
+        function populateLocationDropdowns() {
+            const locationSelects = document.querySelectorAll('select[id$="-location-id"], select[id$="-location-filter"]');
+            locationSelects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Select Location</option>';
+                if (select.id.includes('filter')) {
+                    select.innerHTML = '<option value="all">All Locations</option>';
+                }
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = `${location.id} - ${location.description}`;
+                    select.appendChild(option);
+                });
+                if (currentValue) {
+                    select.value = currentValue;
+                }
+            });
+        }
+
+
+        // --- Dashboard Functionality ---
+
+        /**
+         * Renders the key statistics and charts on the dashboard.
+         */
+        function renderDashboardSummary() {
+            const totalProductsCount = products.length;
+            let totalInventoryQty = 0;
+            inventory.forEach(item => totalInventoryQty += item.availableQty);
+
+            const lowStockThreshold = 10;
+            const lowStockCount = inventory.filter(item => item.availableQty < lowStockThreshold).length;
+
+            const maxVal = Math.max(totalProductsCount, totalInventoryQty, lowStockCount, 1);
+            const maxHeight = 120;
+
+            const productsBar = document.getElementById('total-products-bar');
+            const inventoryBar = document.getElementById('total-inventory-bar');
+            const lowStockBar = document.getElementById('low-stock-bar');
+
+            if (productsBar) {
+                productsBar.style.height = `${(totalProductsCount / maxVal) * maxHeight}px`;
+                productsBar.querySelector('.chart-bar-value').textContent = totalProductsCount;
+            }
+            if (inventoryBar) {
+                inventoryBar.style.height = `${(totalInventoryQty / maxVal) * maxHeight}px`;
+                inventoryBar.querySelector('.chart-bar-value').textContent = totalInventoryQty;
+            }
+            if (lowStockBar) {
+                lowStockBar.style.height = `${(lowStockCount / maxVal) * maxHeight}px`;
+                lowStockBar.querySelector('.chart-bar-value').textContent = lowStockCount;
+            }
+        }
+        
+        /**
+         * Renders a combined table of recent inbound and outbound activities.
+         */
+        function renderRecentActivity() {
+            const tableBody = document.getElementById('recent-activity-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const allActivities = [];
+
+            inboundRecords.forEach(rec => {
+                const product = getProductById(rec.productId);
+                const client = getClientById(rec.clientId);
+                const location = getLocationById(rec.locationId);
+                allActivities.push({
+                    date: rec.date,
+                    type: 'Inbound',
+                    clientId: client ? client.id : 'N/A',
+                    locationId: location ? location.id : 'N/A',
+                    sku: product ? product.sku : 'N/A',
+                    qty: rec.qty,
+                    details: ''
+                });
+            });
+
+            outboundRecords.forEach(out => {
+                const product = getProductById(out.productId);
+                const client = getClientById(out.clientId);
+                const location = getLocationById(out.locationId);
+                allActivities.push({
+                    date: out.date,
+                    type: 'Outbound',
+                    clientId: client ? client.id : 'N/A',
+                    locationId: location ? location.id : 'N/A',
+                    sku: product ? product.sku : 'N/A',
+                    qty: out.qty,
+                    details: out.reason
+                });
+            });
+
+            const recentActivities = allActivities.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+
+            if (recentActivities.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center">No recent activity.</td></tr>`;
+                return;
+            }
+
+            recentActivities.forEach(activity => {
+                const row = tableBody.insertRow();
+                const typeBadgeClass = activity.type === 'Inbound' ? 'badge-success' : 'badge-danger';
+                row.innerHTML = `
+                    <td>${activity.date}</td>
+                    <td><span class="badge ${typeBadgeClass}">${activity.type}</span></td>
+                    <td>${activity.clientId}</td>
+                    <td>${activity.locationId}</td>
+                    <td>${activity.sku}</td>
+                    <td>${activity.qty}</td>
+                    <td>${activity.details || 'N/A'}</td>
+                `;
+            });
+        }
+
+        // --- Clients Page Functionality ---
+
+        /**
+         * Renders the clients table, filtering by search term.
+         */
+        function renderClientsTable() {
+            const tableBody = document.getElementById('clients-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const searchTerm = document.getElementById('client-search')?.value.toLowerCase() || '';
+
+            const filteredClients = clients.filter(c =>
+                c.id.toLowerCase().includes(searchTerm) ||
+                c.name.toLowerCase().includes(searchTerm) ||
+                c.contactPerson.toLowerCase().includes(searchTerm) ||
+                c.email.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredClients.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No clients found.</td></tr>`;
+                return;
+            }
+
+            filteredClients.forEach(client => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${client.id}</td>
+                    <td>${client.name}</td>
+                    <td>${client.contactPerson}</td>
+                    <td>${client.email}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openClientModal('${client.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm ml-2" onclick="confirmDelete('client', '${client.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        /**
+         * Opens the client modal for adding a new client or editing an existing one.
+         * @param {string|null} clientId - The ID of the client to edit, or null for a new client.
+         */
+        function openClientModal(clientId = null) {
+            const modalTitle = document.getElementById('client-modal-title');
+            const form = document.getElementById('client-form');
+            const idInput = document.getElementById('client-id');
+
+            form.reset();
+            currentEditingClientId = clientId;
+
+            if (clientId) {
+                modalTitle.textContent = 'Edit Client';
+                const client = getClientById(clientId);
+                if (client) {
+                    idInput.value = client.id;
+                    idInput.disabled = true;
+                    document.getElementById('client-name').value = client.name;
+                    document.getElementById('client-contact').value = client.contactPerson;
+                    document.getElementById('client-email').value = client.email;
+                }
+            } else {
+                modalTitle.textContent = 'Add New Client';
+                idInput.disabled = false;
+            }
+            openModal('client-modal');
+        }
+
+        /**
+         * Saves a new or updated client to the data store.
+         */
+        function saveClient() {
+            const id = document.getElementById('client-id').value.trim().toUpperCase();
+            const name = document.getElementById('client-name').value.trim();
+            const contactPerson = document.getElementById('client-contact').value.trim();
+            const email = document.getElementById('client-email').value.trim();
+
+            if (!id || !name || !contactPerson || !email) {
+                showMessage('Error', 'Please fill in all required client fields.');
+                return;
+            }
+
+            if (currentEditingClientId) {
+                const clientIndex = clients.findIndex(c => c.id === currentEditingClientId);
+                if (clientIndex !== -1) {
+                    clients[clientIndex] = { ...clients[clientIndex], name, contactPerson, email };
+                    showMessage('Success', `Client '${name}' updated successfully.`);
+                }
+            } else {
+                if (clients.some(c => c.id === id)) {
+                    showMessage('Error', 'Client ID already exists. Please use a unique ID.');
+                    return;
+                }
+                clients.push({ id, name, contactPerson, email });
+                showMessage('Success', `New client '${name}' added successfully.`);
+            }
+            closeModal('client-modal');
+            renderApp();
+        }
+
+        // --- Locations Page Functionality ---
+
+        /**
+         * Renders the locations table, filtering by search term.
+         */
+        function renderLocationsTable() {
+            const tableBody = document.getElementById('locations-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const searchTerm = document.getElementById('location-search')?.value.toLowerCase() || '';
+
+            const filteredLocations = locations.filter(l =>
+                l.id.toLowerCase().includes(searchTerm) ||
+                l.description.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredLocations.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center">No locations found.</td></tr>`;
+                return;
+            }
+
+            filteredLocations.forEach(location => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${location.id}</td>
+                    <td>${location.description || 'N/A'}</td>
+                    <td>${location.capacity || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openLocationModal('${location.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm ml-2" onclick="confirmDelete('location', '${location.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        /**
+         * Opens the location modal for adding a new location or editing an existing one.
+         * @param {string|null} locationId - The ID of the location to edit, or null for a new location.
+         */
+        function openLocationModal(locationId = null) {
+            const modalTitle = document.getElementById('location-modal-title');
+            const form = document.getElementById('location-form');
+            const idInput = document.getElementById('location-id');
+
+            form.reset();
+            currentEditingLocationId = locationId;
+
+            if (locationId) {
+                modalTitle.textContent = 'Edit Location';
+                const location = getLocationById(locationId);
+                if (location) {
+                    idInput.value = location.id;
+                    idInput.disabled = true;
+                    document.getElementById('location-description').value = location.description;
+                    document.getElementById('location-capacity').value = location.capacity;
+                }
+            } else {
+                modalTitle.textContent = 'Add New Location';
+                idInput.disabled = false;
+            }
+            openModal('location-modal');
+        }
+
+        /**
+         * Saves a new or updated location to the data store.
+         */
+        function saveLocation() {
+            const id = document.getElementById('location-id').value.trim().toUpperCase();
+            const description = document.getElementById('location-description').value.trim();
+            const capacity = parseInt(document.getElementById('location-capacity').value);
+
+            if (!id) {
+                showMessage('Error', 'Location Code is required.');
+                return;
+            }
+
+            if (currentEditingLocationId) {
+                const locationIndex = locations.findIndex(l => l.id === currentEditingLocationId);
+                if (locationIndex !== -1) {
+                    locations[locationIndex] = { ...locations[locationIndex], description, capacity };
+                    showMessage('Success', `Location '${id}' updated successfully.`);
+                }
+            } else {
+                if (locations.some(l => l.id === id)) {
+                    showMessage('Error', 'Location Code already exists. Please use a unique code.');
+                    return;
+                }
+                locations.push({ id, description, capacity });
+                showMessage('Success', `New location '${id}' added successfully.`);
+            }
+            closeModal('location-modal');
+            renderApp();
+        }
+
+        // --- Products Page Functionality ---
+
+        /**
+         * Renders the products table, filtering by search term and client.
+         */
+        function renderProductsTable() {
+            const tableBody = document.getElementById('products-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const searchTerm = document.getElementById('product-search')?.value.toLowerCase() || '';
+            const clientFilter = document.getElementById('product-client-filter')?.value || 'all';
+
+            const filteredProducts = products.filter(p => {
+                const matchesSearch = p.sku.toLowerCase().includes(searchTerm) ||
+                                      p.name.toLowerCase().includes(searchTerm) ||
+                                      p.description.toLowerCase().includes(searchTerm);
+                const matchesClient = clientFilter === 'all' || p.clientId === clientFilter;
+                return matchesSearch && matchesClient;
+            });
+
+            if (filteredProducts.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No products found.</td></tr>`;
+                return;
+            }
+
+            filteredProducts.forEach(product => {
+                const client = getClientById(product.clientId);
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${product.sku}</td>
+                    <td>${product.name}</td>
+                    <td>${product.description || 'N/A'}</td>
+                    <td>${product.price.toFixed(2)} AED</td>
+                    <td>${client ? client.name : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openProductModal('${product.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm ml-2" onclick="confirmDelete('product', '${product.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        /**
+         * Opens the product modal for adding a new product or editing an existing one.
+         * @param {string|null} productId - The ID of the product to edit, or null for a new product.
+         */
+        function openProductModal(productId = null) {
+            const modalTitle = document.getElementById('product-modal-title');
+            const form = document.getElementById('product-form');
+            const skuInput = document.getElementById('product-sku');
+            const clientIdInput = document.getElementById('product-client-id');
+
+            form.reset();
+            currentEditingProductId = productId;
+            populateClientDropdowns(); // Ensure client dropdown is fresh
+
+            if (productId) {
+                modalTitle.textContent = 'Edit Product';
+                const product = getProductById(productId);
+                if (product) {
+                    clientIdInput.value = product.clientId;
+                    clientIdInput.disabled = true; // Cannot change client for existing product
+                    skuInput.value = product.sku;
+                    skuInput.disabled = true; // SKU cannot be changed for existing products
+                    document.getElementById('product-name').value = product.name;
+                    document.getElementById('product-description').value = product.description;
+                    document.getElementById('product-price').value = product.price;
+                }
+            } else {
+                modalTitle.textContent = 'Add New Product';
+                clientIdInput.disabled = false;
+                skuInput.disabled = false;
+            }
+            openModal('product-modal');
+        }
+
+        /**
+         * Saves a new or updated product to the data store.
+         */
+        function saveProduct() {
+            const clientId = document.getElementById('product-client-id').value;
+            const sku = document.getElementById('product-sku').value.trim().toUpperCase();
+            const name = document.getElementById('product-name').value.trim();
+            const description = document.getElementById('product-description').value.trim();
+            const price = parseFloat(document.getElementById('product-price').value);
+
+            if (!clientId || !sku || !name || isNaN(price) || price <= 0) {
+                showMessage('Error', 'Please fill in all required fields (Client, SKU, Product Name, Price) and ensure price is a positive number.');
+                return;
+            }
+            if (!getClientById(clientId)) {
+                 showMessage('Error', 'Invalid Client ID selected. Please select an existing client.');
+                 return;
+            }
+
+            if (currentEditingProductId) {
+                const productIndex = products.findIndex(p => p.id === currentEditingProductId);
+                if (productIndex !== -1) {
+                    products[productIndex] = { ...products[productIndex], name, description, price };
+                    showMessage('Success', `Product '${name}' updated successfully.`);
+                }
+            } else {
+                if (products.some(p => p.sku === sku && p.clientId === clientId)) {
+                    showMessage('Error', `Product with SKU '${sku}' already exists for this client. Please use a unique SKU for this client.`);
+                    return;
+                }
+                const newProduct = { id: generateId('P'), clientId, sku, name, description, price };
+                products.push(newProduct);
+                // Also initialize inventory for this new product in all locations for this client
+                locations.forEach(loc => {
+                    inventory.push({ id: generateId('INV'), productId: newProduct.id, clientId: newProduct.clientId, locationId: loc.id, availableQty: 0, reservedQty: 0, damageQty: 0 });
+                });
+                showMessage('Success', `New product '${name}' added successfully.`);
+            }
+            closeModal('product-modal');
+            renderApp();
+        }
+
+        // --- Inventory Page Functionality ---
+
+        /**
+         * Renders the inventory table, filtering by search term, client, and location.
+         */
+        function renderInventoryTable() {
+            const tableBody = document.getElementById('inventory-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const searchTerm = document.getElementById('inventory-search')?.value.toLowerCase() || '';
+            const clientFilter = document.getElementById('inventory-client-filter')?.value || 'all';
+            const locationFilter = document.getElementById('inventory-location-filter')?.value || 'all';
+
+            const filteredInventory = inventory.filter(item => {
+                const product = getProductById(item.productId);
+                const client = getClientById(item.clientId);
+                const location = getLocationById(item.locationId);
+
+                if (!product || !client || !location) return false; // Skip if linked data is missing
+
+                const matchesSearch = product.sku.toLowerCase().includes(searchTerm) ||
+                                      product.name.toLowerCase().includes(searchTerm) ||
+                                      client.name.toLowerCase().includes(searchTerm) ||
+                                      location.id.toLowerCase().includes(searchTerm);
+                const matchesClient = clientFilter === 'all' || item.clientId === clientFilter;
+                const matchesLocation = locationFilter === 'all' || item.locationId === locationFilter;
+
+                return matchesSearch && matchesClient && matchesLocation;
+            });
+
+            if (filteredInventory.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center">No inventory items found.</td></tr>`;
+                return;
+            }
+
+            const lowStockThreshold = 10;
+            filteredInventory.forEach(item => {
+                const product = getProductById(item.productId);
+                const client = getClientById(item.clientId);
+                const location = getLocationById(item.locationId);
+                const statusBadgeClass = item.availableQty <= 0 ? 'badge-danger' : (item.availableQty < lowStockThreshold ? 'badge-warning' : 'badge-success');
+                const statusText = item.availableQty <= 0 ? 'Out of Stock' : (item.availableQty < lowStockThreshold ? 'Low Stock' : 'In Stock');
+
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${product ? product.sku : 'N/A'}</td>
+                    <td>${product ? product.name : 'N/A'}</td>
+                    <td>${client ? client.name : 'N/A'}</td>
+                    <td>${location ? location.id : 'N/A'}</td>
+                    <td>${item.availableQty}</td>
+                    <td><span class="badge ${statusBadgeClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="switchPage('inbound'); document.getElementById('inbound-client-id').value='${item.clientId}'; document.getElementById('inbound-location-id').value='${item.locationId}'; document.getElementById('inbound-sku').value='${product?.sku || ''}'; populateProductName('inbound-sku', 'inbound-product-name', '${item.clientId}');"><i class="fas fa-arrow-down"></i> Receive</button>
+                        <button class="btn btn-danger btn-sm ml-2" onclick="switchPage('outbound'); document.getElementById('outbound-client-id').value='${item.clientId}'; document.getElementById('outbound-location-id').value='${item.locationId}'; document.getElementById('outbound-sku').value='${product?.sku || ''}'; populateProductName('outbound-sku', 'outbound-product-name', '${item.clientId}');"><i class="fas fa-arrow-up"></i> Dispatch</button>
+                    </td>
+                `;
+            });
+        }
+
+        // --- Inbound Page Functionality ---
+
+        /**
+         * Populates product options for inbound based on selected client.
+         */
+        function populateInboundProductOptions() {
+            const clientId = document.getElementById('inbound-client-id').value;
+            const skuInput = document.getElementById('inbound-sku');
+            const productNameInput = document.getElementById('inbound-product-name');
+
+            if (skuInput) skuInput.value = '';
+            if (productNameInput) {
+                productNameInput.value = '';
+                productNameInput.style.color = 'var(--dark)';
+            }
+        }
+
+
+        /**
+         * Processes the receiving of stock, updating inventory and recording the event.
+         */
+        function receiveStock() {
+            const clientId = document.getElementById('inbound-client-id').value;
+            const locationId = document.getElementById('inbound-location-id').value;
+            const sku = document.getElementById('inbound-sku').value.trim().toUpperCase();
+            const qty = parseInt(document.getElementById('inbound-qty').value);
+
+            if (!clientId || !locationId || !sku || isNaN(qty) || qty <= 0) {
+                showMessage('Error', 'Please fill in all required fields (Client, Location, Product SKU, Quantity) and enter a positive quantity.');
+                return;
+            }
+
+            const client = getClientById(clientId);
+            if (!client) { showMessage('Error', 'Invalid Client selected.'); return; }
+            const location = getLocationById(locationId);
+            if (!location) { showMessage('Error', 'Invalid Location selected.'); return; }
+            const product = getProductBySku(sku, clientId); // Ensure product belongs to selected client
+            if (!product) { showMessage('Error', `Product with SKU '${sku}' not found for client '${client.name}'.`); return; }
+
+            let inventoryItem = getInventoryItem(product.id, clientId, locationId);
+
+            if (inventoryItem) {
+                inventoryItem.availableQty += qty;
+            } else {
+                // This shouldn't happen if inventory is pre-initialized for new products in all locations
+                // but as a fallback, if missing, create it.
+                inventory.push({
+                    id: generateId('INV'), productId: product.id, clientId: clientId, locationId: locationId,
+                    availableQty: qty, reservedQty: 0, damageQty: 0
+                });
+            }
+
+            inboundRecords.push({
+                id: generateId('INB'),
+                date: formatDate(new Date()),
+                clientId: clientId,
+                locationId: locationId,
+                productId: product.id,
+                qty: qty
+            });
+
+            showMessage('Success', `${qty} units of '${product.name}' (SKU: ${sku}) received at ${location.id} for ${client.name}.`);
+            // Clear form
+            document.getElementById('inbound-client-id').value = '';
+            document.getElementById('inbound-location-id').value = '';
+            document.getElementById('inbound-sku').value = '';
+            document.getElementById('inbound-qty').value = '1';
+            document.getElementById('inbound-product-name').value = '';
+            document.getElementById('inbound-product-name').style.color = 'var(--dark)';
+            renderApp();
+        }
+
+        /**
+         * Renders the table of recent inbound records.
+         */
+        function renderInboundRecords() {
+            const tableBody = document.getElementById('inbound-records-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const sortedRecords = inboundRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No inbound records found.</td></tr>`;
+                return;
+            }
+
+            sortedRecords.forEach(record => {
+                const product = getProductById(record.productId);
+                const client = getClientById(record.clientId);
+                const location = getLocationById(record.locationId);
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${record.date}</td>
+                    <td>${client ? client.id : 'N/A'}</td>
+                    <td>${location ? location.id : 'N/A'}</td>
+                    <td>${product ? product.sku : 'N/A'}</td>
+                    <td>${product ? product.name : 'N/A'}</td>
+                    <td>${record.qty}</td>
+                `;
+            });
+        }
+
+        // --- Outbound Page Functionality ---
+
+        /**
+         * Populates product options for outbound based on selected client.
+         */
+        function populateOutboundProductOptions() {
+            const clientId = document.getElementById('outbound-client-id').value;
+            const skuInput = document.getElementById('outbound-sku');
+            const productNameInput = document.getElementById('outbound-product-name');
+
+            if (skuInput) skuInput.value = '';
+            if (productNameInput) {
+                productNameInput.value = '';
+                productNameInput.style.color = 'var(--dark)';
+            }
+        }
+
+        /**
+         * Processes the dispatch of stock, updating inventory and recording the event.
+         */
+        function dispatchStock() {
+            const clientId = document.getElementById('outbound-client-id').value;
+            const locationId = document.getElementById('outbound-location-id').value;
+            const sku = document.getElementById('outbound-sku').value.trim().toUpperCase();
+            const qty = parseInt(document.getElementById('outbound-qty').value);
+            const reason = document.getElementById('outbound-reason').value.trim();
+
+            if (!clientId || !locationId || !sku || isNaN(qty) || qty <= 0 || !reason) {
+                showMessage('Error', 'Please fill in all required fields (Client, Location, Product SKU, Quantity, Reason) and enter a positive quantity.');
+                return;
+            }
+
+            const client = getClientById(clientId);
+            if (!client) { showMessage('Error', 'Invalid Client selected.'); return; }
+            const location = getLocationById(locationId);
+            if (!location) { showMessage('Error', 'Invalid Location selected.'); return; }
+            const product = getProductBySku(sku, clientId);
+            if (!product) { showMessage('Error', `Product with SKU '${sku}' not found for client '${client.name}'.`); return; }
+
+            let inventoryItem = getInventoryItem(product.id, clientId, locationId);
+
+            if (!inventoryItem || inventoryItem.availableQty < qty) {
+                showMessage('Error', `Not enough available stock for '${product.name}' (SKU: ${sku}) at ${location.id} for ${client.name}. Available: ${inventoryItem ? inventoryItem.availableQty : 0}`);
+                return;
+            }
+
+            inventoryItem.availableQty -= qty;
+
+            outboundRecords.push({
+                id: generateId('OUT'),
+                date: formatDate(new Date()),
+                clientId: clientId,
+                locationId: locationId,
+                productId: product.id,
+                qty: qty,
+                reason: reason
+            });
+
+            showMessage('Success', `${qty} units of '${product.name}' (SKU: ${sku}) dispatched from ${location.id} for ${client.name}.`);
+            // Clear form
+            document.getElementById('outbound-client-id').value = '';
+            document.getElementById('outbound-location-id').value = '';
+            document.getElementById('outbound-sku').value = '';
+            document.getElementById('outbound-qty').value = '1';
+            document.getElementById('outbound-reason').value = '';
+            document.getElementById('outbound-product-name').value = '';
+            document.getElementById('outbound-product-name').style.color = 'var(--dark)';
+            renderApp();
+        }
+        
+        /**
+         * Renders the table of recent outbound records.
+         */
+        function renderOutboundRecords() {
+            const tableBody = document.getElementById('outbound-records-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const sortedRecords = outboundRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center">No outbound records found.</td></tr>`;
+                return;
+            }
+
+            sortedRecords.forEach(record => {
+                const product = getProductById(record.productId);
+                const client = getClientById(record.clientId);
+                const location = getLocationById(record.locationId);
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${record.date}</td>
+                    <td>${client ? client.id : 'N/A'}</td>
+                    <td>${location ? location.id : 'N/A'}</td>
+                    <td>${product ? product.sku : 'N/A'}</td>
+                    <td>${product ? product.name : 'N/A'}</td>
+                    <td>${record.qty}</td>
+                    <td>${record.reason || 'N/A'}</td>
+                `;
+            });
+        }
+
+        // --- Orders Page Functionality ---
+        /**
+         * Populates product options for order items based on selected client.
+         */
+        function populateOrderProductOptions() {
+            // Re-render order items to clear/update product names
+            renderOrderModalItems();
+        }
+
+        /**
+         * Opens the order modal for creating a new order.
+         * @param {string|null} orderId - Not used for editing in this version, only creating new.
+         */
+        function openOrderModal(orderId = null) {
+            const modalTitle = document.getElementById('order-modal-title');
+            const form = document.getElementById('order-form');
+            const orderItemsContainer = document.getElementById('order-items-container');
+            const orderDateInput = document.getElementById('order-date');
+            const clientIdSelect = document.getElementById('order-client-id');
+
+            if (!modalTitle || !form || !orderItemsContainer || !orderDateInput || !clientIdSelect) return;
+
+            form.reset();
+            orderItemsContainer.innerHTML = ''; // Clear previous items
+            currentOrderModalItems = []; // Reset the temporary array for order items
+            orderItemCounter = 0; // Reset counter for new form
+
+            modalTitle.textContent = 'Create New Order';
+            orderDateInput.value = formatDate(new Date());
+
+            // Add one empty item row initially
+            addOrderItem();
+
+            openModal('order-modal');
+        }
+        
+        /**
+         * Adds a new item row to the order form in the order modal.
+         * @param {object} [itemData] - Optional data to pre-fill the item row (productId, qty, locationId).
+         */
+        function addOrderItem(itemData = {}) {
+            orderItemCounter++;
+            const itemId = orderItemCounter;
+            const container = document.getElementById('order-items-container');
+            if (!container) return;
+
+            const newRow = document.createElement('div');
+            newRow.classList.add('order-item-row', 'form-group');
+            newRow.dataset.itemId = itemId;
+
+            // Prepare product and location data for pre-filling if itemData is provided
+            const product = itemData.productId ? getProductById(itemData.productId) : null;
+            const initialSku = product ? product.sku : '';
+            const initialProductName = product ? product.name : '';
+            const initialQty = itemData.qty || 1;
+            const initialLocationId = itemData.locationId || '';
+
+            newRow.innerHTML = `
+                <hr class="mt-3 mb-3 border-bottom">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeOrderItem(${itemId})"><i class="fas fa-minus-circle"></i> Remove</button>
+                <div class="form-group">
+                    <label class="form-label" for="order-item-sku-${itemId}">SKU</label>
+                    <input type="text" id="order-item-sku-${itemId}" class="form-control" placeholder="Product SKU" value="${initialSku}" oninput="fetchProductDetailsForOrderItem('${itemId}')">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="order-item-name-${itemId}">Product Name</label>
+                    <input type="text" id="order-item-name-${itemId}" class="form-control" value="${initialProductName}" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="order-item-location-${itemId}">Location</label>
+                    <select id="order-item-location-${itemId}" class="form-control">
+                        <option value="">Select Location</option>
+                        <!-- Locations populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="order-item-qty-${itemId}">Quantity</label>
+                    <input type="number" id="order-item-qty-${itemId}" class="form-control" min="1" value="${initialQty}">
+                </div>
+            `;
+            container.appendChild(newRow);
+
+            // Populate locations for the new item row
+            const locationSelect = document.getElementById(`order-item-location-${itemId}`);
+            if (locationSelect) {
+                locations.forEach(loc => {
+                    const option = document.createElement('option');
+                    option.value = loc.id;
+                    option.textContent = loc.id;
+                    locationSelect.appendChild(option);
+                });
+                if (initialLocationId) locationSelect.value = initialLocationId;
+            }
+
+            // Immediately fetch product details if an initial SKU is provided
+            if (initialSku) {
+                fetchProductDetailsForOrderItem(itemId);
+            }
+        }
+
+        /**
+         * Removes an item row from the order form.
+         * @param {number} itemId - The unique ID of the item row to remove.
+         */
+        function removeOrderItem(itemId) {
+            const itemRow = document.querySelector(`.order-item-row[data-item-id="${itemId}"]`);
+            if (itemRow) {
+                itemRow.remove();
+            }
+        }
+        
+        /**
+         * Fetches product details for an order item row based on SKU and selected client.
+         * Updates product name and validates against client.
+         * @param {number} itemId - The ID of the order item row.
+         */
+        function fetchProductDetailsForOrderItem(itemId) {
+            const clientId = document.getElementById('order-client-id').value;
+            const skuInput = document.getElementById(`order-item-sku-${itemId}`);
+            const nameInput = document.getElementById(`order-item-name-${itemId}`);
+            
+            if (!clientId) {
+                nameInput.value = 'Select Client First';
+                nameInput.style.color = 'var(--info)';
+                return;
+            }
+
+            const sku = skuInput.value.trim().toUpperCase();
+            const product = getProductBySku(sku, clientId);
+
+            if (nameInput) {
+                if (product) {
+                    nameInput.value = product.name;
+                    nameInput.style.color = 'var(--dark)';
+                } else {
+                    nameInput.value = 'Product Not Found for this Client';
+                    nameInput.style.color = 'var(--danger)';
+                }
+            }
+        }
+
+        /**
+         * Saves a new order to the data store.
+         * Validates all items and stock availability.
+         */
+        function saveOrder() {
+            const clientId = document.getElementById('order-client-id').value;
+            const orderDate = document.getElementById('order-date').value;
+            const orderItems = [];
+
+            if (!clientId || !orderDate) {
+                showMessage('Error', 'Please select a Client and Order Date.');
+                return;
+            }
+            if (!getClientById(clientId)) {
+                 showMessage('Error', 'Invalid Client ID selected. Please select an existing client.');
+                 return;
+            }
+
+            const itemRows = document.querySelectorAll('#order-items-container .order-item-row');
+            if (itemRows.length === 0) {
+                showMessage('Error', 'Please add at least one item to the order.');
+                return;
+            }
+
+            let allItemsValid = true;
+            itemRows.forEach(row => {
+                const itemId = row.dataset.itemId;
+                const skuInput = document.getElementById(`order-item-sku-${itemId}`);
+                const qtyInput = document.getElementById(`order-item-qty-${itemId}`);
+                const locationInput = document.getElementById(`order-item-location-${itemId}`);
+
+                const sku = skuInput.value.trim().toUpperCase();
+                const qty = parseInt(qtyInput.value);
+                const locationId = locationInput.value;
+
+                if (!sku || isNaN(qty) || qty <= 0 || !locationId) {
+                    showMessage('Error', `Item ${itemId}: All fields (SKU, Quantity, Location) are required and Quantity must be positive.`);
+                    allItemsValid = false;
+                    return;
+                }
+                const product = getProductBySku(sku, clientId);
+                if (!product) {
+                    showMessage('Error', `Item ${itemId}: Product with SKU '${sku}' not found for this client.`);
+                    allItemsValid = false;
+                    return;
+                }
+                if (!getLocationById(locationId)) {
+                    showMessage('Error', `Item ${itemId}: Invalid Location selected.`);
+                    allItemsValid = false;
+                    return;
+                }
+
+                // Check available stock (optional for 'created' status, but good for immediate feedback)
+                const inventoryItem = getInventoryItem(product.id, clientId, locationId);
+                if (!inventoryItem || inventoryItem.availableQty < qty) {
+                    showMessage('Warning', `Item ${itemId}: Not enough stock for '${product.name}' (SKU: ${sku}) at ${locationId}. Available: ${inventoryItem ? inventoryItem.availableQty : 0}. Order can be created, but picking might be delayed.`);
+                }
+
+                orderItems.push({ productId: product.id, qty: qty, locationId: locationId });
+            });
+
+            if (!allItemsValid || orderItems.length === 0) {
+                return; // Stop if any item is invalid
+            }
+
+            const newOrderId = generateId('ORD');
+            orders.push({
+                id: newOrderId,
+                clientId: clientId,
+                orderDate: orderDate,
+                status: 'created',
+                items: orderItems,
+            });
+            showMessage('Success', `Order '${newOrderId}' created successfully.`);
+            closeModal('order-modal');
+            renderApp();
+        }
+
+        /**
+         * Renders the orders table, filtering by search term and client.
+         */
+        function renderOrdersTable() {
+            const tableBody = document.getElementById('orders-table');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const searchTerm = document.getElementById('order-search')?.value.toLowerCase() || '';
+            const clientFilter = document.getElementById('order-client-filter')?.value || 'all';
+
+            const filteredOrders = orders.filter(order => {
+                const client = getClientById(order.clientId);
+                if (!client) return false;
+
+                const orderItemsText = order.items.map(item => getProductById(item.productId)?.name.toLowerCase() || '').join(' ');
+                
+                const matchesSearch = order.id.toLowerCase().includes(searchTerm) ||
+                                       client.name.toLowerCase().includes(searchTerm) ||
+                                       orderItemsText.includes(searchTerm);
+                const matchesClient = clientFilter === 'all' || order.clientId === clientFilter;
+
+                return matchesSearch && matchesClient;
+            }).sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+
+
+            if (filteredOrders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No orders found.</td></tr>`;
+                return;
+            }
+
+            filteredOrders.forEach(order => {
+                const client = getClientById(order.clientId);
+                const totalItems = order.items.reduce((sum, item) => sum + item.qty, 0);
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${client ? client.name : 'N/A'}</td>
+                    <td>${order.orderDate}</td>
+                    <td>${totalItems}</td>
+                    <td><span class="badge badge-${getOrderStatusBadgeClass(order.status)}">${getOrderStatusDisplayText(order.status)}</span></td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="openOrderViewPrintModal('${order.id}')"><i class="fas fa-eye"></i> View/Print</button>
+                        <div class="dropdown ml-2">
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="toggleDropdown(this)" aria-expanded="false">
+                                <i class="fas fa-exchange-alt"></i> Status
+                            </button>
+                            <ul class="dropdown-menu">
+                                ${generateOrderStatusOptions(order.id, order.status)}
+                            </ul>
+                        </div>
+                        <button class="btn btn-danger btn-sm ml-2" onclick="confirmDelete('order', '${order.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        /**
+         * Returns the appropriate badge class for an order status.
+         * @param {string} status - The order status.
+         * @returns {string} The CSS class for the badge.
+         */
+        function getOrderStatusBadgeClass(status) {
+            switch (status) {
+                case 'created': return 'primary';
+                case 'picked': return 'info';
+                case 'packed': return 'warning';
+                case 'dispatched': return 'primary';
+                case 'delivered': return 'success';
+                case 'cancelled': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        /**
+         * Returns the display text for an order status.
+         * @param {string} status - The order status.
+         * @returns {string} The human-readable status text.
+         */
+        function getOrderStatusDisplayText(status) {
+            switch (status) {
+                case 'created': return 'Created';
+                case 'picked': return 'Picked';
+                case 'packed': return 'Packed';
+                case 'dispatched': return 'Dispatched';
+                case 'delivered': return 'Delivered';
+                case 'cancelled': return 'Cancelled';
+                default: return status.charAt(0).toUpperCase() + status.slice(1);
+            }
+        }
+
+        /**
+         * Generates HTML options for updating an order's status.
+         * @param {string} orderId - The ID of the order.
+         * @param {string} currentStatus - The current status of the order.
+         * @returns {string} HTML string for dropdown items.
+         */
+        function generateOrderStatusOptions(orderId, currentStatus) {
+            const statuses = ['created', 'picked', 'packed', 'dispatched', 'delivered', 'cancelled'];
+            let optionsHtml = '';
+            statuses.forEach(status => {
+                const displayStatus = getOrderStatusDisplayText(status);
+                const isDisabled = status === currentStatus ? 'disabled' : '';
+                optionsHtml += `<li><a class="dropdown-item ${isDisabled}" href="#" onclick="updateOrderStatus('${orderId}', '${status}'); event.preventDefault();">${displayStatus}</a></li>`;
+            });
+            return optionsHtml;
+        }
+
+        /**
+         * Toggles the display of a custom dropdown menu.
+         * @param {HTMLElement} button - The button element that triggers the dropdown.
+         */
+        function toggleDropdown(button) {
+            const dropdownMenu = button.nextElementSibling;
+            if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                dropdownMenu.classList.toggle('show');
+            }
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                if (menu !== dropdownMenu) {
+                    menu.classList.remove('show');
+                }
+            });
+        }
+
+        // Close dropdown if clicking outside
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+
+        /**
+         * Updates the status of a specific order.
+         * Includes basic status flow validation and inventory updates (reserving/deducting/releasing stock).
+         * @param {string} orderId - The ID of the order to update.
+         * @param {string} newStatus - The new status to set for the order.
+         */
+        function updateOrderStatus(orderId, newStatus) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) { showMessage('Error', 'Order not found.'); return; }
+
+            // Basic status flow validation
+            const statusFlow = {
+                'created': ['picked', 'cancelled'],
+                'picked': ['packed', 'cancelled'],
+                'packed': ['dispatched', 'cancelled'],
+                'dispatched': ['delivered', 'cancelled'],
+                'delivered': [], // Delivered is final
+                'cancelled': []  // Cancelled is final
+            };
+
+            if (!statusFlow[order.status] || !statusFlow[order.status].includes(newStatus)) {
+                showMessage('Warning', `Invalid status transition from '${getOrderStatusDisplayText(order.status)}' to '${getOrderStatusDisplayText(newStatus)}'.`);
+                return;
+            }
+
+            // Inventory impact based on status change
+            if (newStatus === 'picked' && order.status === 'created') {
+                let allItemsAvailable = true;
+                order.items.forEach(orderItem => {
+                    const inventoryItem = getInventoryItem(orderItem.productId, order.clientId, orderItem.locationId);
+                    if (!inventoryItem || inventoryItem.availableQty < orderItem.qty) {
+                        const product = getProductById(orderItem.productId);
+                        showMessage('Error', `Cannot pick order. Not enough stock for '${product?.name || 'N/A'}' (SKU: ${product?.sku || 'N/A'}) at ${orderItem.locationId}. Available: ${inventoryItem ? inventoryItem.availableQty : 0}`);
+                        allItemsAvailable = false;
+                        return;
+                    }
+                });
+
+                if (!allItemsAvailable) return; // Stop if any item is not available
+
+                // If all available, reserve stock
+                order.items.forEach(orderItem => {
+                    const inventoryItem = getInventoryItem(orderItem.productId, order.clientId, orderItem.locationId);
+                    inventoryItem.availableQty -= orderItem.qty;
+                    inventoryItem.reservedQty += orderItem.qty;
+                });
+                showMessage('Success', `Order '${orderId}' picked. Stock reserved.`);
+            } else if (newStatus === 'dispatched' && order.status === 'packed') {
+                // Deduct reserved stock (assumes 'packed' status already moved from available to reserved)
+                order.items.forEach(orderItem => {
+                    const inventoryItem = getInventoryItem(orderItem.productId, order.clientId, orderItem.locationId);
+                    if (inventoryItem && inventoryItem.reservedQty >= orderItem.qty) {
+                        inventoryItem.reservedQty -= orderItem.qty;
+                    } else {
+                        // This case should not happen if previous steps were correct
+                        showMessage('Error', `Issue dispatching order ${orderId}. Reserved stock for item ${orderItem.productId} at ${orderItem.locationId} is insufficient.`);
+                    }
+                    // Record as outbound
+                    outboundRecords.push({
+                        id: generateId('OUT'), date: formatDate(new Date()), clientId: order.clientId,
+                        locationId: orderItem.locationId, productId: orderItem.productId, qty: orderItem.qty,
+                        reason: `Order Dispatch: ${order.id}`
+                    });
+                });
+                showMessage('Success', `Order '${orderId}' dispatched. Stock deducted.`);
+            } else if (newStatus === 'cancelled' && (order.status === 'created' || order.status === 'picked' || order.status === 'packed')) {
+                // Release reserved stock back to available if cancelled
+                order.items.forEach(orderItem => {
+                    const inventoryItem = getInventoryItem(orderItem.productId, order.clientId, orderItem.locationId);
+                    if (inventoryItem) {
+                        if (order.status === 'picked' || order.status === 'packed') {
+                            // Only release if it was reserved
+                            inventoryItem.reservedQty -= orderItem.qty;
+                            inventoryItem.availableQty += orderItem.qty;
+                        }
+                    }
+                });
+                showMessage('Info', `Order '${orderId}' cancelled. Reserved stock released.`);
+            }
+
+            order.status = newStatus;
+            showMessage('Success', `Order '${orderId}' status updated to ${getOrderStatusDisplayText(newStatus)}.`);
+            renderApp();
+        }
+
+        /**
+         * Opens the order view/print modal and populates it with order details.
+         * @param {string} orderId - The ID of the order to display.
+         */
+        function openOrderViewPrintModal(orderId) {
+            currentViewingOrderId = orderId; // Store for print function
+            updateOrderPrintContent(orderId);
+            openModal('order-view-print-modal');
+        }
+
+        let currentViewingOrderId = null; // To hold the ID of the order being viewed/printed
+
+        /**
+         * Triggers the browser's print function for the content of the order print modal.
+         */
+        function printOrder() {
+            window.print();
+        }
+
+
+        // --- Generic Delete Function ---
+
+        /**
+         * Displays a confirmation modal before deleting an item.
+         * Handles cascading deletions for related data.
+         * @param {'client'|'location'|'product'|'order'} type - The type of item to delete.
+         * @param {string} id - The ID of the item to delete.
+         */
+        function confirmDelete(type, id) {
+            const modalTitleEl = document.getElementById('confirmation-modal-title');
+            const modalMessageEl = document.getElementById('confirmation-modal-message');
+            const confirmActionBtn = document.getElementById('confirm-action-btn');
+
+            if (!modalTitleEl || !modalMessageEl || !confirmActionBtn) return;
+
+            modalTitleEl.textContent = `Delete ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            modalMessageEl.textContent = `Are you sure you want to delete this ${type}? This action cannot be undone and may affect related data.`;
+            confirmActionBtn.onclick = () => deleteItem(type, id);
+            openModal('confirmation-modal');
+        }
+
+        /**
+         * Deletes an item of a specific type from the data store.
+         * Handles cascading deletions for related data.
+         * @param {'client'|'location'|'product'|'order'} type - The type of item to delete.
+         * @param {string} id - The ID of the item to delete.
+         */
+        function deleteItem(type, id) {
+            switch (type) {
+                case 'client':
+                    clients = clients.filter(c => c.id !== id);
+                    products = products.filter(p => p.clientId !== id);
+                    inventory = inventory.filter(inv => inv.clientId !== id);
+                    inboundRecords = inboundRecords.filter(rec => rec.clientId !== id);
+                    outboundRecords = outboundRecords.filter(out => out.clientId !== id);
+                    orders = orders.filter(o => o.clientId !== id);
+                    break;
+                case 'location':
+                    locations = locations.filter(l => l.id !== id);
+                    inventory = inventory.filter(inv => inv.locationId !== id); // Remove inventory for this location
+                    inboundRecords = inboundRecords.filter(rec => rec.locationId !== id);
+                    outboundRecords = outboundRecords.filter(out => out.locationId !== id);
+                    orders.forEach(order => {
+                        order.items = order.items.filter(item => item.locationId !== id); // Remove items from this location
+                    });
+                    orders = orders.filter(o => o.items.length > 0); // Remove orders with no items left
+                    break;
+                case 'product':
+                    products = products.filter(p => p.id !== id);
+                    inventory = inventory.filter(inv => inv.productId !== id);
+                    inboundRecords = inboundRecords.filter(rec => rec.productId !== id);
+                    outboundRecords = outboundRecords.filter(out => out.productId !== id);
+                    orders.forEach(order => {
+                        order.items = order.items.filter(item => item.productId !== id);
+                    });
+                    orders = orders.filter(o => o.items.length > 0);
+                    break;
+                case 'order':
+                    orders = orders.filter(o => o.id !== id);
+                    // Important: If an order is deleted, and it had reserved stock, that stock should be released.
+                    // This simple delete just removes the order, proper stock management would be complex here.
+                    // For simplicity, we assume this is handled via status changes before deletion.
+                    break;
+                default:
+                    break;
+            }
+            showMessage('Success', `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully.`);
+            closeModal('confirmation-modal');
+            renderApp();
+        }
+
+        // --- CSV Import/Export ---
+
+        /**
+         * Converts an array of objects to a CSV string.
+         * @param {Array<object>} data - The array of objects to convert.
+         * @param {Array<string>} [headers] - Optional array of headers to use for CSV columns.
+         * @returns {string} The CSV formatted string.
+         */
+        function convertArrayOfObjectsToCSV(data, headers) {
+            if (!data || data.length === 0) return '';
+            const csvRows = [];
+            const finalHeaders = headers || Object.keys(data[0]);
+            csvRows.push(finalHeaders.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+
+            for (const row of data) {
+                const values = finalHeaders.map(header => {
+                    let value = row[header];
+                    if (value === undefined || value === null) {
+                        value = '';
+                    } else if (typeof value === 'object' && !Array.isArray(value)) {
+                        value = JSON.stringify(value);
+                    } else if (Array.isArray(value)) {
+                        // Special handling for array of order items
+                        if (header === 'Items') {
+                            value = value.map(item => {
+                                const product = getProductById(item.productId);
+                                return `${product?.sku || 'N/A'}(x${item.qty} @ ${item.locationId || 'N/A'})`;
+                            }).join('; ');
+                        } else {
+                            value = JSON.stringify(value);
+                        }
+                    } else {
+                        value = String(value);
+                    }
+                    const escaped = ('' + value).replace(/"/g, '""');
+                    return `"${escaped}"`;
+                });
+                csvRows.push(values.join(','));
+            }
+            return csvRows.join('\n');
+        }
+
+        /**
+         * Generic export CSV function.
+         * @param {'clients'|'locations'|'products'|'inbound'|'outbound'|'orders'} dataType - The type of data to export.
+         */
+        function exportCSV(dataType) {
+            let dataToExport = [];
+            let filename = '';
+            let headers = [];
+
+            switch (dataType) {
+                case 'clients':
+                    dataToExport = clients.map(({ id, name, contactPerson, email }) => ({ 'Client ID': id, 'Client Name': name, 'Contact Person': contactPerson, 'Email': email }));
+                    filename = 'clients_data.csv';
+                    headers = ['Client ID', 'Client Name', 'Contact Person', 'Email'];
+                    break;
+                case 'locations':
+                    dataToExport = locations.map(({ id, description, capacity }) => ({ 'Location Code': id, 'Description': description, 'Capacity': capacity }));
+                    filename = 'locations_data.csv';
+                    headers = ['Location Code', 'Description', 'Capacity'];
+                    break;
+                case 'products':
+                    dataToExport = products.map(p => {
+                        const client = getClientById(p.clientId);
+                        return { 'Client ID': p.clientId, 'Client Name': client?.name || 'N/A', 'SKU': p.sku, 'Product Name': p.name, 'Description': p.description, 'Price': p.price };
+                    });
+                    filename = 'products_data.csv';
+                    headers = ['Client ID', 'Client Name', 'SKU', 'Product Name', 'Description', 'Price'];
+                    break;
+                case 'inbound':
+                    dataToExport = inboundRecords.map(rec => {
+                        const product = getProductById(rec.productId);
+                        const client = getClientById(rec.clientId);
+                        const location = getLocationById(rec.locationId);
+                        return { 'Date': rec.date, 'Client ID': rec.clientId, 'Client Name': client?.name || 'N/A', 'Location Code': rec.locationId, 'Location Description': location?.description || 'N/A', 'SKU': product?.sku || 'N/A', 'Product Name': product?.name || 'N/A', 'Quantity': rec.qty };
+                    });
+                    filename = 'inbound_records.csv';
+                    headers = ['Date', 'Client ID', 'Client Name', 'Location Code', 'Location Description', 'SKU', 'Product Name', 'Quantity'];
+                    break;
+                case 'outbound':
+                    dataToExport = outboundRecords.map(out => {
+                        const product = getProductById(out.productId);
+                        const client = getClientById(out.clientId);
+                        const location = getLocationById(out.locationId);
+                        return { 'Date': out.date, 'Client ID': out.clientId, 'Client Name': client?.name || 'N/A', 'Location Code': out.locationId, 'Location Description': location?.description || 'N/A', 'SKU': product?.sku || 'N/A', 'Product Name': product?.name || 'N/A', 'Quantity': out.qty, 'Reason': out.reason };
+                    });
+                    filename = 'outbound_records.csv';
+                    headers = ['Date', 'Client ID', 'Client Name', 'Location Code', 'Location Description', 'SKU', 'Product Name', 'Quantity', 'Reason'];
+                    break;
+                case 'orders':
+                    dataToExport = orders.map(order => {
+                        const client = getClientById(order.clientId);
+                        return {
+                            'Order ID': order.id,
+                            'Client ID': order.clientId,
+                            'Client Name': client?.name || 'N/A',
+                            'Order Date': order.orderDate,
+                            'Status': order.status,
+                            'Items': order.items // This will be handled by convertArrayOfObjectsToCSV
+                        };
+                    });
+                    filename = 'orders_data.csv';
+                    headers = ['Order ID', 'Client ID', 'Client Name', 'Order Date', 'Status', 'Items'];
+                    break;
+                default:
+                    showMessage('Error', 'Invalid data type for export.');
+                    return;
+            }
+
+            if (dataToExport.length === 0) {
+                showMessage('Info', 'No data available to export.');
+                return;
+            }
+
+            const csvString = convertArrayOfObjectsToCSV(dataToExport, headers);
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('Success', `${filename} exported successfully!`);
+            } else {
+                showMessage('Error', 'Your browser does not support downloading files directly.');
+            }
+        }
+
+        /**
+         * Generic import CSV function.
+         * Reads a CSV file, parses it, and updates the corresponding data arrays.
+         * @param {'clients'|'locations'|'products'|'inbound'|'outbound'|'orders'} dataType - The type of data to import.
+         */
+        function importCSV(dataType) {
+            const fileInputId = `import-${dataType}-file`;
+            const fileInput = document.getElementById(fileInputId);
+            const file = fileInput ? fileInput.files[0] : null;
+
+            if (!file) {
+                showMessage('Error', 'Please select a CSV file to import.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const workbook = XLSX.read(csv, { type: 'string' });
+                const sheetName = workbook.SheetNames[0];
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                if (json.length === 0) {
+                    showMessage('Error', 'The CSV file is empty or contains no valid data.');
+                    return;
+                }
+
+                try {
+                    switch (dataType) {
+                        case 'clients':
+                            json.forEach(row => {
+                                const id = row['Client ID']?.toString().trim().toUpperCase();
+                                const name = row['Client Name']?.toString().trim();
+                                const contactPerson = row['Contact Person']?.toString().trim() || '';
+                                const email = row['Email']?.toString().trim() || '';
+
+                                if (!id || !name) { showMessage('Warning', `Skipped client record due to missing 'Client ID' or 'Client Name'.`); return; }
+
+                                const existing = getClientById(id);
+                                if (existing) { Object.assign(existing, { name, contactPerson, email }); }
+                                else { clients.push({ id, name, contactPerson, email }); }
+                            });
+                            break;
+                        case 'locations':
+                            json.forEach(row => {
+                                const id = row['Location Code']?.toString().trim().toUpperCase();
+                                const description = row['Description']?.toString().trim() || '';
+                                const capacity = parseInt(row['Capacity']) || 0;
+
+                                if (!id) { showMessage('Warning', `Skipped location record due to missing 'Location Code'.`); return; }
+
+                                const existing = getLocationById(id);
+                                if (existing) { Object.assign(existing, { description, capacity }); }
+                                else { locations.push({ id, description, capacity }); }
+                            });
+                            break;
+                        case 'products':
+                            json.forEach(row => {
+                                const clientId = row['Client ID']?.toString().trim().toUpperCase();
+                                const sku = row['SKU']?.toString().trim().toUpperCase();
+                                const name = row['Product Name']?.toString().trim();
+                                const description = row['Description']?.toString().trim() || '';
+                                const price = parseFloat(row['Price']) || 0;
+
+                                if (!clientId || !sku || !name || isNaN(price) || price <= 0) { showMessage('Warning', `Skipped product record due to invalid data (SKU: ${sku || 'N/A'}).`); return; }
+                                if (!getClientById(clientId)) { showMessage('Warning', `Skipped product '${sku}' for non-existent Client ID: '${clientId}'.`); return; }
+
+                                const existing = products.find(p => p.sku === sku && p.clientId === clientId);
+                                if (existing) { Object.assign(existing, { name, description, price }); }
+                                else {
+                                    const newProduct = { id: generateId('P'), clientId, sku, name, description, price };
+                                    products.push(newProduct);
+                                    locations.forEach(loc => {
+                                        inventory.push({ id: generateId('INV'), productId: newProduct.id, clientId: newProduct.clientId, locationId: loc.id, availableQty: 0, reservedQty: 0, damageQty: 0 });
+                                    });
+                                }
+                            });
+                            break;
+                        case 'inbound':
+                            json.forEach(row => {
+                                const date = row['Date']?.toString().trim() || formatDate(new Date());
+                                const clientId = row['Client ID']?.toString().trim().toUpperCase();
+                                const locationId = row['Location Code']?.toString().trim().toUpperCase();
+                                const sku = row['SKU']?.toString().trim().toUpperCase();
+                                const qty = parseInt(row['Quantity']) || 0;
+
+                                if (!clientId || !locationId || !sku || qty <= 0) { showMessage('Warning', `Skipped inbound record due to invalid data.`); return; }
+                                if (!getClientById(clientId)) { showMessage('Warning', `Skipped inbound for non-existent Client ID: '${clientId}'.`); return; }
+                                if (!getLocationById(locationId)) { showMessage('Warning', `Skipped inbound for non-existent Location Code: '${locationId}'.`); return; }
+                                const product = getProductBySku(sku, clientId);
+                                if (!product) { showMessage('Warning', `Skipped inbound for unknown SKU '${sku}' for client '${clientId}'.`); return; }
+
+                                let inventoryItem = getInventoryItem(product.id, clientId, locationId);
+                                if (inventoryItem) { inventoryItem.availableQty += qty; }
+                                else { inventory.push({ id: generateId('INV'), productId: product.id, clientId, locationId, availableQty: qty, reservedQty: 0, damageQty: 0 }); }
+                                inboundRecords.push({ id: generateId('INB'), date, clientId, locationId, productId: product.id, qty });
+                            });
+                            break;
+                        case 'outbound':
+                            json.forEach(row => {
+                                const date = row['Date']?.toString().trim() || formatDate(new Date());
+                                const clientId = row['Client ID']?.toString().trim().toUpperCase();
+                                const locationId = row['Location Code']?.toString().trim().toUpperCase();
+                                const sku = row['SKU']?.toString().trim().toUpperCase();
+                                const qty = parseInt(row['Quantity']) || 0;
+                                const reason = row['Reason']?.toString().trim() || 'Imported Outbound';
+
+                                if (!clientId || !locationId || !sku || qty <= 0) { showMessage('Warning', `Skipped outbound record due to invalid data.`); return; }
+                                if (!getClientById(clientId)) { showMessage('Warning', `Skipped outbound for non-existent Client ID: '${clientId}'.`); return; }
+                                if (!getLocationById(locationId)) { showMessage('Warning', `Skipped outbound for non-existent Location Code: '${locationId}'.`); return; }
+                                const product = getProductBySku(sku, clientId);
+                                if (!product) { showMessage('Warning', `Skipped outbound for unknown SKU '${sku}' for client '${clientId}'.`); return; }
+
+                                let inventoryItem = getInventoryItem(product.id, clientId, locationId);
+                                if (inventoryItem && inventoryItem.availableQty >= qty) {
+                                    inventoryItem.availableQty -= qty;
+                                    outboundRecords.push({ id: generateId('OUT'), date, clientId, locationId, productId: product.id, qty, reason });
+                                } else {
+                                    showMessage('Warning', `Not enough stock for SKU '${sku}' at '${locationId}' for Client '${clientId}' to process outbound of '${qty}' units.`);
+                                }
+                            });
+                            break;
+                        case 'orders':
+                            json.forEach(row => {
+                                const id = row['Order ID']?.toString().trim() || generateId('ORD');
+                                const clientId = row['Client ID']?.toString().trim().toUpperCase();
+                                const orderDate = row['Order Date']?.toString().trim() || formatDate(new Date());
+                                const status = row['Status']?.toString().trim().toLowerCase() || 'created';
+                                const itemsRaw = row['Items']?.toString().split(';').map(itemStr => itemStr.trim()).filter(Boolean) || [];
+
+                                if (!clientId || !orderDate || itemsRaw.length === 0) { showMessage('Warning', `Skipped order record due to invalid data.`); return; }
+                                if (!getClientById(clientId)) { showMessage('Warning', `Skipped order '${id}' for non-existent Client ID: '${clientId}'.`); return; }
+
+                                const orderItems = itemsRaw.map(itemStr => {
+                                    const match = itemStr.match(/(.+)\(x(\d+)\s*@\s*(.+)\)/); // e.g., "SKU001(x10 @ L-A1)"
+                                    if (match) {
+                                        const sku = match[1].trim().toUpperCase();
+                                        const qty = parseInt(match[2]);
+                                        const locationId = match[3].trim().toUpperCase();
+                                        const product = getProductBySku(sku, clientId);
+                                        if (product && getLocationById(locationId)) {
+                                            return { productId: product.id, qty, locationId };
+                                        }
+                                    }
+                                    return null;
+                                }).filter(Boolean); // Remove null items
+
+                                if (orderItems.length > 0) {
+                                    const existing = orders.findIndex(o => o.id === id);
+                                    if (existing !== -1) { Object.assign(orders[existing], { clientId, orderDate, status, items: orderItems }); }
+                                    else { orders.push({ id, clientId, orderDate, status, items: orderItems }); }
+                                } else {
+                                    showMessage('Warning', `Skipped order '${id}' due to invalid or unidentifiable items.`);
+                                }
+                            });
+                            break;
+                    }
+                    showMessage('Success', `Successfully imported data into ${dataType.charAt(0).toUpperCase() + dataType.slice(1)}.`);
+                    renderApp();
+                } catch (error) {
+                    console.error('Error processing CSV:', error);
+                    showMessage('Error', `Failed to process CSV file for ${dataType}. Please check the format.`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+    </script>
+</body>
+</html>
